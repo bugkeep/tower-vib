@@ -1,0 +1,45 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+
+# ===== OS / Editor =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ===== Logs / Outputs =====
+results/
+**/results/
+*.log
+
+# ===== Data / Cache =====
+data/
+**/data/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.npz
+*.npy
+
+# ===== Model / Weights (if any later) =====
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# ===== Temporary =====
+tmp/
+cache/
+*.tmp
