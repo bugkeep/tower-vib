@@ -43,3 +43,6 @@ data/
 tmp/
 cache/
 *.tmp
+
+!data/.gitkeep
+!results/.gitkeep
