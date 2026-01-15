@@ -4,6 +4,9 @@ import cv2 as cv
 import numpy as np
 import logging
 from datetime import datetime
+import  subprocess
+import  sys
+from  datetime import datetime
 #=======参数设置======#
 ROOT=Path(__file__).resolve().parents[1]
 VIDEO=ROOT /"data"/"demo_tower.mp4"
@@ -50,6 +53,18 @@ def setup_logging(log_dir:str|Path="results/logs",name:str="tower-vib",level:int
     logger.info(f"Logging to file: {log_path.resolve()}")
     return logger
 
+def step_extract_roi(video,roi,max_frames):
+    cmd = [
+        sys.executable, "scripts/extract_roi.py",
+        "--video", str(video),
+        "--roi", *map(str, roi),
+        "--max_frames", str(max_frames),
+    ]
+    subprocess.run(cmd,check=True,cwd=ROOT)
+    out_npz=list((ROOT/"results"/"cache").glob("*_main_roi_frames.npz"))
+    if len(out_npz)==0:
+        raise RuntimeError("out_npz==0")
+
 def read_video_frames(cap):
     grays=[]
     for i in range(200):
@@ -60,23 +75,24 @@ def read_video_frames(cap):
         grays.append(gray)
     return grays
 
-def save_frame_npz(grays,fps):
-    grays_arr=np.stack(grays,axis=0)
-    np.savez(OUT_NPZ,grays=grays_arr,fps=float(fps))
-    print("save:",OUT_NPZ,"shape:",grays_arr.shape,"fps:",fps)
+# def save_frame_npz(grays,fps):
+#     grays_arr=np.stack(grays,axis=0)
+#     np.savez(OUT_NPZ,grays=grays_arr,fps=float(fps))
+#     print("save:",OUT_NPZ,"shape:",grays_arr.shape,"fps:",fps)
 
-def roi(grays,roi_xywh):
-    x,y,w,h=roi_xywh
-    patches=[]
-    for i,g in enumerate(grays):
-        patch=g[y:y+h,x:x+w]
-        if patch.shape[0]!=h or patch.shape[1]!=w:
-            raise RuntimeError(f"ROI out of bounds at frame {i}, got {patch.shape}, expect {(h,w)}")
-        patches.append(patch.copy())
-    return patches
+# def roi(grays,roi_xywh):
+#     x,y,w,h=roi_xywh
+#     patches=[]
+#     for i,g in enumerate(grays):
+#         patch=g[y:y+h,x:x+w]
+#         if patch.shape[0]!=h or patch.shape[1]!=w:
+#             raise RuntimeError(f"ROI out of bounds at frame {i}, got {patch.shape}, expect {(h,w)}")
+#         patches.append(patch.copy())
+#     return patches
 
 def main():
-    logger = setup_logging(ROOT / "results" / "logs", name="day28")
+    ts = datetime.now().strftime("%Y-%m-%d")
+    logger = setup_logging( ROOT / "results" / "logs", name=f"{ts}")
     cap=cv.VideoCapture(VIDEO)
     print("cap opened:", cap.isOpened())
     if not cap.isOpened():
@@ -84,14 +100,14 @@ def main():
     fps=cap.get(cv.CAP_PROP_FPS)
     grays=read_video_frames(cap)
     roi_xywh = (200,100,128,128)
-    grays_roi=roi(grays,roi_xywh)
-
+    # grays_roi=roi(grays,roi_xywh)
+    step_extract_roi(VIDEO,roi_xywh,200)
     logger.info("start pipeline")
     logger.info(f"video_path={VIDEO}")
     logger.info(f"fps={fps}")
     logger.info(f"roi_xywh={roi_xywh}")
     logger.warning("this is a warning example")
-    save_frame_npz(grays_roi, fps)
+    # save_frame_npz(grays_roi, fps)
     cap.release()
 
 
