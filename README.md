@@ -1,19 +1,27 @@
-## tower-vib
+## ## tower-vib
 
-Industrial-grade video vibrometry: phase-based subpixel displacement, no-GT consistency metrics, and robustness benchmarks.
+Industrial-grade video vibrometry (WIP): ROI caching, phase-based subpixel displacement, and physics-oriented vibration features.
 
 ## Overview
 
-This repo measures **transmission tower vibration** from video.
-It extracts a **golden ROI**, estimates **subpixel displacement** using **phase-based methods**, and outputs **physics-oriented features** (e.g., vibration frequency via PSD).
-It also provides **no-ground-truth (no-GT)** consistency metrics and **robustness benchmarks** under degradations.
+This repo measures **transmission tower vibration** from video.  
+Current pipeline:
 
-## Key features
+1) Extract and cache a **golden ROI** video clip (default 200 frames) to `.npz`
+2) Run a lightweight **ROI mean-curve sanity check** and export `.png/.csv`
 
-- **Subpixel motion** from phase correlation / phase consistency (robust under illumination & texture changes)
-- **Physics features**: displacement curve, PSD, peak frequency
-- **No-GT self-evaluation**: temporal / resampling consistency without ground truth
-- **Robustness benchmarks**: blur / compression / jitter / noise degradations
+## Repo structure
+
+- `data/` : input videos (e.g. `demo_tower.mp4`)
+- `scripts/`
+  - `extract_roi.py` : cache ROI frames to `results/cache/*.npz`
+  - `roi_mean_curve_check.py` : compute ROI mean curve and save plot/csv
+  - `run_pipeline.py` : end-to-end runner (extract ROI + mean curve)
+- `results/`
+  - `cache/` : cached ROI `.npz`
+  - `plots/` : mean curve plot `.png`
+  - `data/`  : mean curve `.csv`
+  - `logs/`  : run logs
 
 ## Quick start
 
@@ -23,37 +31,48 @@ It also provides **no-ground-truth (no-GT)** consistency metrics and **robustnes
 pip install -r requirements.txt
 ```
 
-### 2)Cache golden ROI sequence(200 frames)
+## 2）Run pipeline(cache ROI + mean curve)
 
 ```bash
 python scripts/run_pipeline.py
 ```
 
-## Expected output:
+# Excepted outputs
 
-- `results/cache/day28_frames.npz`  (shape: ` (200,H,W)`e.g. ` (200,128,128) `)
+After running,you should get:
 
-- ` results/logs/*.log` 
-  TODO: set ROI in ` scripts/run_pipeline.py` as `(x,y,w,h)`
-  Example:` (200,100,128,128)`
+- ` results/cache/YYYY-MM-DD_main_roi_frames.npz`
 
-## Data format
+- ` results/plots/YYYY-MM-DD_mean_curve.png`
 
-`results/cache/day28_frames.npz` contains:
+- ` results/data/YYYY-MM-DD_mean_curve.csv`
 
-- `roi` or `grays`: ROI grayscale sequence, shape `(T, H, W)` (e.g. `(200, 128, 128)`)
-- `fps`: frames per second
-- `roi_xywh`: ROI coordinates `(x, y, w, h)`
+- ` results/logs/*.log`
 
-## Reproducibility
+# NPZ format
 
-- All experiments are designed to be reproducible from cached ROI ` .npz`.
-- Logs record ` video_path`,` fps`,` roi_xywh`,and output paths.
+` results/cache/*_main_roi_frames.npz`contains:
 
-## Roadmap
+- `frames`:ROI frame sequence
+  
+  - shape:`(T,H,W,3)`for color ROI (OpenCV default BGR)
+  
+  - (optional future)`(T,H,W)`for grayscale ROI
 
-- [ ] 2026/1/13:cache 200-frame golden ROI sequence to `.npz` with logging
+- `roi`:ROI coordinates`(x,y,w,h)`
 
+- `video`:source video path
 
+- `fps`:frames per second
 
+# Notes
 
+- ROI mean curve is used as a sanity check:
+  
+  - verifies ROI extraction correctness
+  
+  - help detect abnormal frames via sudden instensity jumps
+
+- ROI is currently set in`scripts/run_pipeline.py`as`(x,y,w,h)`
+
+- 
