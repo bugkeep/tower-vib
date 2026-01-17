@@ -43,6 +43,8 @@ data/
 tmp/
 cache/
 *.tmp
-
+env_info.json
+env_info.txt
+requirements.txt
 !data/.gitkeep
 !results/.gitkeep
