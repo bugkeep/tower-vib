@@ -5,6 +5,8 @@ import  subprocess
 import  sys
 from roi_mean_curve_check import run_roi_mean_probe
 from  datetime import datetime
+import argparse
+
 #=======参数设置======#
 ROOT=Path(__file__).resolve().parents[1]
 VIDEO=ROOT /"data"/"demo_tower.mp4"
@@ -74,14 +76,22 @@ def step_extract_roi(video,roi,max_frames):
         raise RuntimeError("out_npz==0")
     return out_npz
 
-def read_video_frames(cap):
+def parse_args():
+    parser = argparse.ArgumentParser(description="tower-vib pipeline")
+    parser.add_argument('--video', type=str, default=VIDEO, help='视频路径')
+    parser.add_argument('--roi', type=int, nargs=4, default=(200,100,128,128), help='ROI x,y,w,h')
+    parser.add_argument('--max_frames', type=int, default=200, help='最大帧数')
+    parser.add_argument('--skip_env_check',action="store_true",help="跳过环境检查")
+    return parser.parse_args()
+
+def read_video_frames(cap,max_frames:int):
     """
-    读取前200帧
+    读取前max_frames帧
     :param cap:
     :return:
     """
     grays=[]
-    for i in range(200):
+    for i in range(max_frames):
         ok,frame=cap.read()
         if not ok:
             raise RuntimeError(f"this frame {i} error")
@@ -125,15 +135,41 @@ def main():
         level=logging.INFO,
         format="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s:%(lineno)d | %(message)s"
     )
+    args=parse_args()
     ts = datetime.now().strftime("%Y-%m-%d")
     logger = setup_logging( ROOT / "results" / "logs", name=f"{ts}")
-    cap=cv.VideoCapture(VIDEO)
+    #==============================================
+    if not args.skip_env_check:
+        SCRIPT_DIR=Path(__file__).resolve().parent
+        if str(SCRIPT_DIR) not in sys.path:
+            sys.path.append(str(SCRIPT_DIR))
+
+        try:
+            from check_env import  verify_environment,generate_check_report
+        except Exception as e:
+            logger.error(f"无法导入 check_env.py（请确认 scripts/check_env.py 存在且无额外依赖）：{e}")
+            raise
+        requirements_path=str(ROOT/"requirements.txt")
+        env=verify_environment(requirements_path)
+        report_path=generate_check_report(env,str(ROOT))
+        logger.info(f"[env-check] Report generated at:{report_path}")
+        if not env["success"]:
+            logger.error("[env-check] 环境验证失败：缺包或版本不匹配。")
+            logger.error("你可以先安装缺失依赖，或加 --skip_env_check 跳过（不推荐）。")
+            raise SystemExit(1)
+        else:
+            logger.info("[env-check] 环境验证成功")
+    else:
+        logger.info("[env-check] skipped")
+#===================================================
+    cap=cv.VideoCapture(args.video)
     print("cap opened:", cap.isOpened())
     if not cap.isOpened():
         raise RuntimeError("cannot open video (check path/codec)")
     fps=cap.get(cv.CAP_PROP_FPS)
-    grays=read_video_frames(cap)
-    roi_xywh = (200,100,128,128)
+    logger.info(f"fps={fps}")
+    grays=read_video_frames(cap,args.max_frames)
+    roi_xywh =tuple(args.roi)
     # grays_roi=roi(grays,roi_xywh)
     npz_path=step_extract_roi(VIDEO,roi_xywh,200)
     # save_frame_npz(grays_roi, fps)
@@ -142,7 +178,6 @@ def main():
         run_roi_mean_probe(i)
 
     cap.release()
-
 
 if __name__ == "__main__":
     main()
