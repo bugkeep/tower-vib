@@ -1,5 +1,5 @@
 ## tower-vib
-
+Active development. No license granted yet.
 Industrial-grade video vibrometry (WIP): ROI caching, phase-based subpixel displacement, and physics-oriented vibration features.
 
 ## Overview
