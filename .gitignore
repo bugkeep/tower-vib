@@ -10,6 +10,7 @@ build/
 venv/
 .env
 .ipynb_checkpoints/
+*.pyc
 
 # ===== OS / Editor =====
 .DS_Store
@@ -22,6 +23,12 @@ Thumbs.db
 results/
 **/results/
 *.log
+tower-vib/env_info*.json
+tower-vib/env_info*.txt
+tower-vib/env_check_report*.txt
+tower-vib/env_report*.json
+tower-vib/diff_report*.json
+tower-vib2/
 
 # ===== Data / Cache =====
 data/
@@ -48,3 +55,10 @@ env_info.txt
 requirements.txt
 !data/.gitkeep
 !results/.gitkeep
+
+#====== Env / venv / conda===
+.venv/
+venv/
+env/
+.conda/
+*.conda
