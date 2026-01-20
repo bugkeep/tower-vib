@@ -10,7 +10,6 @@ import argparse
 #=======参数设置======#
 ROOT=Path(__file__).resolve().parents[1]
 VIDEO=ROOT /"data"/"demo_tower.mp4"
-OUT_NPZ=ROOT/"results"/"cache"/"day28_frames.npz"
 def setup_logging(log_dir:str|Path="results/logs",name:str="tower-vib",level:int=logging.INFO)->logging.Logger:
     """
     日志工具
@@ -70,11 +69,11 @@ def step_extract_roi(video,roi,max_frames):
         "--max_frames", str(max_frames),
     ]
     subprocess.run(cmd,check=True,cwd=ROOT)
-    out_npz=list((ROOT/"results"/"cache").glob("*_main_roi_frames.npz"))
+    out_npz=sorted((ROOT/"results"/"cache").glob("*_main_roi_frames.npz"), key=lambda p: p.stat().st_mtime)
     logger.info(f"candidates={[p.name for p in out_npz]}")
-    if len(out_npz)==0:
+    if  not out_npz:
         raise RuntimeError("out_npz==0")
-    return out_npz
+    return out_npz[-1:]
 
 def parse_args():
     parser = argparse.ArgumentParser(description="tower-vib pipeline")
@@ -90,11 +89,13 @@ def read_video_frames(cap,max_frames:int):
     :param cap:
     :return:
     """
+    logger = logging.getLogger(__name__)
     grays=[]
     for i in range(max_frames):
         ok,frame=cap.read()
         if not ok:
-            raise RuntimeError(f"this frame {i} error")
+            logger.warning(f"视频提前结束:frame {i} error")
+            break
         gray=cv.cvtColor(frame,cv.COLOR_BGR2GRAY)
         grays.append(gray)
     return grays
@@ -171,7 +172,7 @@ def main():
     grays=read_video_frames(cap,args.max_frames)
     roi_xywh =tuple(args.roi)
     # grays_roi=roi(grays,roi_xywh)
-    npz_path=step_extract_roi(VIDEO,roi_xywh,200)
+    npz_path=step_extract_roi(VIDEO,roi_xywh,args.max_frames)
     # save_frame_npz(grays_roi, fps)
     #npz文件全部跑一边
     for i in  npz_path:

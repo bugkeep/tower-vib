@@ -1,4 +1,3 @@
-import os
 import logging
 import numpy as np
 from pathlib import  Path
@@ -55,7 +54,9 @@ def save_mean_curve_csv(mean_curve,out_path):
         df = pd.DataFrame({"frame": np.arange(len(mean_curve)),
                            "mean_r": mean_curve[:, 0],
                            "mean_g": mean_curve[:, 1],
-                           "mean_b": mean_curve[:, 2]})
+                           "mean_b": mean_curve[:, 2],
+                           "mean_value": mean_curve.mean(axis=1)},
+        )
     else:
         raise ValueError("unexpected mean_curve shape")
     df.to_csv(output_path,index=False)
