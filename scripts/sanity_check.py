@@ -177,14 +177,14 @@ CHECK_RULES = [{
 ]
 
 
-def run_checks_by_rules(results,logger):
+def run_checks_by_rules(results_dir,logger):
     """
     根据规则自动扫描并检查文件
     :param results:
     :param logger:
     :return:
     """
-    results_dir = Path(results)
+    results_dir = Path(results_dir)
     all_results=[]
 
     logger.info("开始检查...")
